@@ -24,20 +24,10 @@ def motion_movement(drone, feature, width, height, pid, prev_error):#parameter a
     x_error = x - (width // 2)
     y_error = y - (height // 2)
     fb_speed = 0
-    yaw_speed = 0
-    ud_speed = 0
     yaw_speed = pid[0]*x_error + pid[1]*(x_error - prev_error[0])
     yaw_speed = int(np.clip(yaw_speed,-100,100))
     ud_speed = pid[0]*y_error + pid[1]*(y_error - prev_error[1])
     ud_speed = int(np.clip(ud_speed, -100,100))
-
-    # if x_error < 0:
-    #     yaw_speed = 20
-    #     print("slowly turn left :", abs(yaw_speed))
-    # elif x_error > 0:
-    #     yaw_speed = -20
-    #     print("slowly turn right :", yaw_speed)
-
 
     if area > fb_range[0] and area < fb_range[1]:
         fb_speed = 0
