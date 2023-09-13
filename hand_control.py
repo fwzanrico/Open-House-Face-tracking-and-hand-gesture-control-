@@ -4,10 +4,11 @@ import numpy as np
 from djitellopy import tello
 
 
+
 drone = tello.Tello()
 drone.connect()
 
-fb_range = [20000, 20000]
+fb_range = [40000, 42000]
 pid = [0.4 , 0.4 , 0.4]
 p_error = [0,0]
 cam_w = 640
@@ -36,7 +37,7 @@ def hand_follow(drone, hand_bounding_area, center_point, prev_error):
         print("move backward 15 cm")
 
     if area != 0:
-         drone.send_rc_control(0, fb_speed, -ud_speed, yaw_speed)
+         drone.send_rc_control(0, fb_speed, -ud_speed, -yaw_speed)
     else:
          drone.send_rc_control(0,0,0,0)
 
@@ -83,13 +84,13 @@ def hand_gesture(hand_point_list, bounding_area, bounding_center):
 
 
 def cam_stream():
-    cam = cv2.VideoCapture(0)
+    #cam = cv2.VideoCapture(0)
     mpHands = mp.solutions.hands
     hands = mpHands.Hands()
     mpDraw = mp.solutions.drawing_utils
     bounding_area = 0
     bounding_center = list()
-    drone.stream_on()
+    drone.streamon()
     while True:
         #success , img = cam.read()
         img = drone.get_frame_read().frame
@@ -98,7 +99,9 @@ def cam_stream():
         results = hands.process(imageRGB)
         hand_point = dict()
         if results.multi_hand_landmarks:
+            hand_detected = True
             for idx, handLms in enumerate(results.multi_hand_landmarks): # working with each hand
+                
                 # Check if this is the right hand
                 if results.multi_handedness[idx].classification[0].label == 'Right':
                     landmarks_list = []
@@ -116,8 +119,12 @@ def cam_stream():
                     # Draw the bounding rectangle on the image
                     cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
                     print("Center : ", bounding_center, "Area : ", bounding_area)
-                    gesture_result = hand_gesture(hand_point, bounding_area, bounding_center)
+                    
+        else:
+            hand_detected = False
 
+        if hand_detected:
+            gesture_result = hand_gesture(hand_point, bounding_area, bounding_center)
         cv2.imshow("Output", img)
         
         cv2.waitKey(1)
