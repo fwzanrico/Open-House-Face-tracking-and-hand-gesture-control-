@@ -9,7 +9,7 @@ drone.connect()
 
 
 fb_range = [10000, 12000]#sesuaikan dengan resolusi wajah yang dinginkan
-pid = [0.3 , 0.3 , 0.3]
+pid = [0.4 , 0.4 , 0.4]
 
 p_error = [0,0]
 
@@ -17,8 +17,7 @@ cam_w = 640
 cam_h = 480
 
 
-def motion_movement(drone, feature, width, height, pid, prev_error):#parameter asli(drone, feature, camera weight, pid, previous error)
-
+def motion_movement(drone, feature, width, height, pid, prev_error):
     area = feature[1]
     x, y = feature[0]
     x_error = x - (width // 2)
@@ -34,10 +33,10 @@ def motion_movement(drone, feature, width, height, pid, prev_error):#parameter a
         print("Stay")
     elif area < fb_range[0]:
         fb_speed = 10
-        print("move forward 15 cm")
+        print("move forward 10 cm")
     else:
         fb_speed = -10
-        print("move backward 15 cm")
+        print("move backward 10 cm")
 
     if feature[1] != 0:
          drone.send_rc_control(0, fb_speed, -ud_speed, yaw_speed)
