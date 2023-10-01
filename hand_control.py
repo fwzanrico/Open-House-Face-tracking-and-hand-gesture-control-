@@ -8,40 +8,24 @@ from djitellopy import tello
 drone = tello.Tello()
 drone.connect()
 
-fb_range = [40000, 42000]
-pid = [0.4 , 0.4 , 0.4]
-p_error = [0,0]
+pid = [0.3 , 0.2 , 0.4]
+p_error = 0
 cam_w = 640
 cam_h = 480
 
 
-def hand_follow(drone, hand_bounding_area, center_point, prev_error):
+def hand_follow(hand_bounding_area, center_point, prev_error):
     area = hand_bounding_area
-    x, y = center_point
-    x_error = x - (cam_w // 2)
-    y_error = y - (cam_h // 2)
+    x= center_point
+    x_error = x - (640 // 2)
     fb_speed = 0
-    yaw_speed = pid[0]*x_error + pid[1]*(x_error - prev_error[0])
+    yaw_speed = pid[0]*x_error + pid[1]*(x_error - prev_error)
     yaw_speed = int(np.clip(yaw_speed,-100,100))
-    ud_speed = pid[0]*y_error + pid[1]*(y_error - prev_error[1])
-    ud_speed = int(np.clip(ud_speed, -100,100))
-
-    if area > fb_range[0] and area < fb_range[1]:
-        fb_speed = 0
-        print("Stay")
-    elif area < fb_range[0]:
-        fb_speed = 15
-        print("move forward 15 cm")
-    else:
-        fb_speed = -15
-        print("move backward 15 cm")
 
     if area != 0:
-         drone.send_rc_control(0, fb_speed, -ud_speed, -yaw_speed)
-    else:
-         drone.send_rc_control(0,0,0,0)
+         drone.send_rc_control(0, 0, 0, -yaw_speed)
+    return x_error
 
-    return [x_error, y_error]
 
 def hand_gesture(hand_point_list, bounding_area, bounding_center):
     global p_error
@@ -64,23 +48,34 @@ def hand_gesture(hand_point_list, bounding_area, bounding_center):
             ring_open = False
         if hand_point_list[20][1] > hand_point_list[18][1]:
             pinky_open = False
-    
+
+    # Print the status of each finger
+    print(f"Thumbs open: {thumbs_open}")
+    print(f"Index open: {index_open}")
+    print(f"Middle open: {middle_open}")
+    print(f"Ring open: {ring_open}")
+    print(f"Pinky open: {pinky_open}")
 
     ##tinggal kesepakatan mau gerak gimana
     if (index_open and middle_open) and (not thumbs_open and not ring_open and not pinky_open):
         drone.flip_forward()
         print("flip forward")
     elif thumbs_open and index_open and middle_open and ring_open and pinky_open:
-        p_error = hand_follow(drone, bounding_area, bounding_center, p_error)
+        p_error = hand_follow(bounding_area, bounding_center, p_error)
         print("follow my hand")
-
+    elif thumbs_open and not( index_open or middle_open or ring_open or pinky_open ):
+        drone.move_right(10)
+        print("move right 10 cm")
+    elif  pinky_open and not( index_open or middle_open or ring_open or thumbs_open):
+        drone.move_left(10)
+        print("move left 10 cm")
     elif not(thumbs_open or index_open or middle_open or ring_open or pinky_open):
         drone.land()
         print("landing")
+
     else:
         print("do nothing")
     return [thumbs_open, index_open, middle_open, ring_open, pinky_open]
-    
 
 
 def cam_stream():
@@ -89,8 +84,8 @@ def cam_stream():
     hands = mpHands.Hands()
     mpDraw = mp.solutions.drawing_utils
     bounding_area = 0
-    bounding_center = list()
-    drone.streamon()
+    bounding_center = 0
+    
     while True:
         #success , img = cam.read()
         img = drone.get_frame_read().frame
@@ -115,7 +110,7 @@ def cam_stream():
                     landmarks_array = np.array(landmarks_list, dtype=np.int32)
                     x, y, w, h = cv2.boundingRect(landmarks_array)
                     bounding_area = w * h
-                    bounding_center = [x + w // 2,y + h // 2]
+                    bounding_center = x + w // 2
                     # Draw the bounding rectangle on the image
                     cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
                     print("Center : ", bounding_center, "Area : ", bounding_area)
@@ -129,6 +124,8 @@ def cam_stream():
         
         cv2.waitKey(1)
 if __name__ == "__main__":
+    
+    drone.streamon()
     batt = drone.get_battery()
     print("Battery percentage: ", batt)
     print("If u want to start press 's' on your keyboard :")
@@ -137,7 +134,6 @@ if __name__ == "__main__":
             break
     
     drone.takeoff()
-    drone.send_rc_control(0,0,10,0)
     print('Start tracking? (press y): ')
     while True:
         if input() == 'y':

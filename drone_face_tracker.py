@@ -4,13 +4,11 @@ import numpy as np
 import time
 
 drone = tello.Tello()
-
-
 drone.connect()
-
+drone.streamon()
 
 fb_range = [20000, 22000]#sesuaikan dengan resolusi wajah yang dinginkan
-pid = [0.4 , 0.4 , 0.4]
+pid = [0.3 , 0.1 , 0]#up_coming progress
 
 p_error = [0,0]
 
@@ -22,39 +20,23 @@ def motion_movement(drone, feature, width, height, pid, prev_error):#parameter a
 
     area = feature[1]
     x, y = feature[0]
+
     x_error = x - (width // 2)
     y_error = y - (height // 2)
+
     fb_speed = 0
     yaw_speed = 0
     ud_speed = 0
     yaw_speed = pid[0]*x_error + pid[1]*(x_error - prev_error[0])
     yaw_speed = int(np.clip(yaw_speed,-100,100))
+
     ud_speed = pid[0]*y_error + pid[1]*(y_error - prev_error[1])
     ud_speed = int(np.clip(ud_speed, -100,100))
-
-    # if x_error < 0:
-    #     yaw_speed = 20
-    #     print("slowly turn left :", abs(yaw_speed))
-    # elif x_error > 0:
-    #     yaw_speed = -20
-    #     print("slowly turn right :", yaw_speed)
-
-
-    if area > fb_range[0] and area < fb_range[1]:
-        fb_speed = 0
-        print("Stay")
-    elif area < fb_range[0]:
-        fb_speed = 10
-        print("move forward 15 cm")
-    else:
-        fb_speed = -10
-        print("move backward 15 cm")
-
-    if feature[1] != 0:
+    if area != 0:
         #drone.send_rc_control(0, fb_speed, -ud_speed, yaw_speed)
         drone.send_rc_control(0, 0, 0, yaw_speed)
-    else:
-        drone.send_rc_control(0,0,0,0)
+    # else:
+    #     drone.send_rc_control(0,0,0,0)
 
     return [x_error, y_error]
 
@@ -118,11 +100,10 @@ if __name__ == '__main__':
     #     end = time.time()
 
     drone.takeoff()
-    #drone.send_rc_control(0,0 ,15 ,0)
+   
     print('Start tracking? (press y): ')
     while True:
         if input() == 'y':
-            drone.streamon()
             face_tracker()
             break
     
