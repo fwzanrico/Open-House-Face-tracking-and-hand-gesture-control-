@@ -6,17 +6,21 @@ This project aims to create a face following system for DJI Tello drone using Py
 ## Technologies and Tools
 The system uses a pre-trained haarcascade model from [https://www.geeksforgeeks.org/face-detection-using-cascade-classifier-using-opencv-python/] to detect faces in the video stream from the drone camera.
 ## Features and Functionalities
-The system can follow the face with the highest confidence by checking the position of the bounding box around the face. It also maintains a safe distance from the face by calculating the Euclidean distance between the bounding box and a threshold value. The system can be controlled by using a smartphone app that sends commands to the drone via Wi-Fi.
+The system can follow the face with the biggest bounding box with a certain range of detection
 
 ## How to Run and Test
 ### dependencies
+
 djitellopy == 1.5
+
 numpy == 1.19.3
+
 opencv_python == 4.5.1.48
+
 ### how to run
 1. install all of the required libraries
 2. clone the repository(model already included in this repository)
-3. run the main
+3. run the drone_face_tracking.py
 
 ## References
 https://www.youtube.com/watch?v=vDOkUHNdmKs&t=456s&pp=ygUeZGppIHRlbGxvIGRyb25lIGZhY2UgdHJhY2tpbmcg
